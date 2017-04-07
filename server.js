@@ -1,9 +1,13 @@
 const express = require('express');
 const bodyParser = require('body-parser');
+const MongoClient = require('mongodb').MongoClient;
+const ObjectID = require('mongodb').ObjectID;
+
 const app = express();
+let db;
 
 app.use(bodyParser.json()); //Парсить правильно json
-app.use(bodyParser.urlencoded({extended: true})); // Прсить данные формы
+app.use(bodyParser.urlencoded({ extended: true })); // Прсить данные формы
 
 let artists = [
     {
@@ -21,47 +25,66 @@ let artists = [
     {
         id: 4,
         name: 'Three Dayse Grace'
-    },
+    }
 ]
 
 app.get('/', (req, res) => {
     res.send('Hello API');
 });
 
-app.get('/artists', (req, res)=>{
-    res.send(artists);
+app.get('/artists', (req, res) => {
+    db.collection('artist').find().toArray((err, docs) => {
+        if (err) {
+            console.log(err);
+            return res.sendStatus(500);
+        }
+        res.send(docs);
+    })
 })
 
 app.get('/artists/:id', (req, res) => {
-    console.log(req.params);
-    let artist = artists.find( index => index.id == Number(req.params.id));
-    res.send(artist);
+    db.collection('artist').findOne({ _id : ObjectID(req.params.id) }, (err, doc) => {
+        if (err) {
+            console.log(err);
+            return res.sendStatus(500);
+        }
+        res.send(doc);
+    })
 })
-
+//UPDATE artist
 app.post('/artists', (req, res) => {
     let artist = {
-        id: Date.now(),
         name: req.body.name
     }
-    
-    artists.push(artist);
-    res.send(artist);
+    db.collection('artist').insert(artist, (err, result) => {
+        if (err) {
+            console.log(err);
+            return res.sendStatus(500);
+        }
+        res.send(artist);
+    });
 })
-
-app.put('/artists/:id', (req, res) => {    
-    let artist = artists.find( index => index.id == Number(req.params.id));
-    artist.name = req.body.name;    
+// PUT artist
+app.put('/artists/:id', (req, res) => {
+    let artist = artists.find(index => index.id == Number(req.params.id));
+    artist.name = req.body.name;
     res.sendStatus(200);
 })
-
-app.delete('/artists/:id', (req, res) => {    
-    artists = artists.filter( artist => artist.id !== Number(req.params.id));
+//DELETE artist
+app.delete('/artists/:id', (req, res) => {
+    artists = artists.filter(artist => artist.id !== Number(req.params.id));
     // res.send(artists);
     res.sendStatus(200);
 })
 
 
 
-app.listen(3012, () =>{
-    console.log('API STARTED')
+MongoClient.connect('mongodb://localhost:27017/myapi', (err, database) => {
+    if (err) {
+        return console.log(err);
+    }
+    db = database;
+    app.listen(3012, () => {
+        console.log('API STARTED')
+    })
 })
