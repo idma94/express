@@ -9,25 +9,6 @@ let db;
 app.use(bodyParser.json()); //Парсить правильно json
 app.use(bodyParser.urlencoded({ extended: true })); // Прсить данные формы
 
-let artists = [
-    {
-        id: 1,
-        name: 'Metallica'
-    },
-    {
-        id: 2,
-        name: 'Iron Maiden'
-    },
-    {
-        id: 3,
-        name: 'Beep Purple'
-    },
-    {
-        id: 4,
-        name: 'Three Dayse Grace'
-    }
-]
-
 app.get('/', (req, res) => {
     res.send('Hello API');
 });
@@ -66,15 +47,30 @@ app.post('/artists', (req, res) => {
 })
 // PUT artist
 app.put('/artists/:id', (req, res) => {
-    let artist = artists.find(index => index.id == Number(req.params.id));
-    artist.name = req.body.name;
-    res.sendStatus(200);
+    db.collection('artist').updateOne(
+        {_id : ObjectID(req.params.id)},
+        { name : req.body.name },
+        (err, result) => {
+            if (err) {
+                console.log(err);
+                return res.sendStatus(500);
+            }
+            res.send(200);
+        } 
+    )
 })
 //DELETE artist
 app.delete('/artists/:id', (req, res) => {
-    artists = artists.filter(artist => artist.id !== Number(req.params.id));
-    // res.send(artists);
-    res.sendStatus(200);
+    db.collection('artist').deleteOne(
+        {_id : ObjectID(req.params.id)},
+        (err, result) => {
+            if (err) {
+                console.log(err);
+                return res.sendStatus(500);
+            }
+            res.send(200);
+        } 
+    )
 })
 
 
